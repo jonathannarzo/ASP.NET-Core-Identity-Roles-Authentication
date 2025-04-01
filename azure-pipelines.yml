@@ -11,16 +11,39 @@ pool:
   demands:
     - agent.name -equals sampleagent  # Optional: Ensures a specific agent runs it
 
-
 variables:
   buildConfiguration: 'Release'
+  azureWebAppName: 'angapp'  # Replace with your actual web app name
+  azureSubscription: 'myazuresubscription'  # Replace with your Azure subscription name
 
-steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: BuildJob
+    pool:
+      name: sampleagentpool  # Use your self-hosted agent pool name
+    steps:
+    - script: dotnet build --configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory)
+      displayName: 'dotnet build $(buildConfiguration)'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(build.artifactStagingDirectory)'
-    artifactName: 'drop'
-    publishLocation: 'Container'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Build  # Ensures the deploy stage runs after the build stage
+  jobs:
+  - job: DeployJob
+    pool:
+      name: sampleagentpool  # Use your self-hosted agent pool name
+    steps:
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: $(azureSubscription)
+        appName: $(azureWebAppName)
+        package: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+        deploymentMethod: 'auto'
