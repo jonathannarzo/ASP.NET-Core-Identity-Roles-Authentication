@@ -2,7 +2,7 @@ trigger:
 - master  # Change to 'main' if needed
 
 pool:
-  vmImage: ubuntu-latest  # Use 'windows-latest' if needed
+  vmImage: windows-latest  # Use 'windows-latest' if needed
 
 variables:
   buildConfiguration: 'Release'
