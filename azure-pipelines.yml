@@ -7,7 +7,9 @@ trigger:
 - master
 
 pool:
-  vmImage: 'windows-latest'
+  name: sampleagentpool  # Use your self-hosted agent pool name
+  demands:
+    - agent.name -equals sampleagent  # Optional: Ensures a specific agent runs it
 
 variables:
   solution: '**/*.sln'
