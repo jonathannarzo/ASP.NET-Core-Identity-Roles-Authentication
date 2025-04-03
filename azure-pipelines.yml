@@ -1,0 +1,50 @@
+trigger:
+- master  # Adjust the branch name as needed
+
+pool:
+  vmImage: windows-latest  # Windows machine for .NET apps
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'  # Adjust to your .NET version
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+- script: |
+    dotnet restore api.csproj
+    dotnet build api.csproj --configuration $(buildConfiguration)
+  displayName: 'Restore & Build'
+
+# Run EF Core Migrations BEFORE publishing the app
+- script: |
+    dotnet tool install --global dotnet-ef
+    dotnet ef database update --project api.csproj --connection "$(ShopDb)"
+  displayName: 'Apply EF Core Migrations'
+  env:
+    ShopDb: $(ShopDb)
+
+- script: |
+    dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
+  displayName: 'Publish'
+
+# Zip the published artifacts (optional, depending on your needs)
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'  # Path to the publish folder
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/api.zip'
+    replaceExistingArchive: true
+  displayName: 'Zip Published Artifacts'
+
+# Publish the zipped artifact (for storage in Azure DevOps artifacts, for later use)
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)/api.zip'
+    artifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publish Zipped Artifacts'
