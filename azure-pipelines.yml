@@ -2,7 +2,7 @@ trigger:
 - master  # Adjust the branch name as needed
 
 pool:
-  vmImage: windows-latest  # Or 'windows-latest' if required for your environment
+  vmImage: windows-latest  # Windows machine for .NET apps
 
 variables:
   buildConfiguration: 'Release'
@@ -18,6 +18,14 @@ steps:
     dotnet restore api.csproj
     dotnet build api.csproj --configuration $(buildConfiguration)
   displayName: 'Restore & Build'
+
+# Run EF Core Migrations BEFORE publishing the app
+- script: |
+    dotnet tool install --global dotnet-ef
+    dotnet ef database update --project api.csproj
+  displayName: 'Apply EF Core Migrations'
+  env:
+    ConnectionStrings__DefaultConnection: $(ConnectionStrings.DefaultConnection)  # Use Azure DevOps variable for DB connection
 
 - script: |
     dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
