@@ -22,10 +22,8 @@ steps:
 # Run EF Core Migrations BEFORE publishing the app
 - script: |
     dotnet tool install --global dotnet-ef
-    dotnet ef database update --project api.csproj --connection "$(ShopDb)"
+    dotnet ef database update --project api.csproj
   displayName: 'Apply EF Core Migrations'
-  env:
-    ShopDb: $(ShopDb)
 
 - script: |
     dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
