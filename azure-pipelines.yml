@@ -25,7 +25,7 @@ steps:
     dotnet ef database update --project api.csproj
   displayName: 'Apply EF Core Migrations'
   env:
-    ConnectionStrings__DefaultConnection: $(ConnectionStrings.DefaultConnection)  # Use Azure DevOps variable for DB connection
+    ShopDb: $(ShopDb)
 
 - script: |
     dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
