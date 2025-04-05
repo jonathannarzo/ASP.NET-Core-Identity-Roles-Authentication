@@ -24,7 +24,6 @@ steps:
           dotnet tool install --global dotnet-ef
           # This will create migrations if they don't already exist
           dotnet ef migrations add InitialCreate --project api.csproj --startup-project api.csproj || echo "Migrations already added."
-          dotnet ef database update --project api.csproj --startup-project api.csproj
       displayName: "Create EF Core Migrations (if needed)"
 
     # Apply the EF Core migrations to the database
