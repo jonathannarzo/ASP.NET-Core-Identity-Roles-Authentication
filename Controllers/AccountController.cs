@@ -280,6 +280,16 @@ public class AccountController : ControllerBase
     [HttpGet("logout")]
     public async Task<ActionResult> Logout()
     {
+        // Define the same cookie options for the refreshToken cookie
+        var cookieOptions = new CookieOptions
+        {
+            Path = "/",
+            HttpOnly = true,
+            Secure = true,
+            Expires = DateTime.UtcNow.AddDays(-1),
+            SameSite = SameSiteMode.None
+        };
+
         if (Request.Cookies["userName"] != null)
         {
             var email = Request.Cookies["userName"];
@@ -287,11 +297,15 @@ public class AccountController : ControllerBase
             await _userManager.RemoveAuthenticationTokenAsync(user, TokenOptions.DefaultProvider, "RefreshToken");
             await _userManager.UpdateSecurityStampAsync(user);
 
+            // Delete the userName cookie
+            Response.Cookies.Append("userName", "", cookieOptions);
             Response.Cookies.Delete("userName");
         }
 
         if (Request.Cookies["refreshToken"] != null)
         {
+            // Delete the refreshToken cookie
+            Response.Cookies.Append("refreshToken", "", cookieOptions);
             Response.Cookies.Delete("refreshToken");
         }
 
