@@ -22,8 +22,12 @@ steps:
     # Run EF Core Migrations BEFORE publishing the app
     - script: |
           dotnet tool install --global dotnet-ef
-          # This will create migrations if they don't already exist
-          dotnet ef migrations add InitialCreate --project api.csproj --startup-project api.csproj || echo "Migrations already added."
+          # Check if the migration already exists before adding it
+          if ! dotnet ef migrations list --project api.csproj --startup-project api.csproj | grep -q 'InitialCreate'; then
+              dotnet ef migrations add InitialCreate --project api.csproj --startup-project api.csproj
+          else
+              echo "Migrations already exist."
+          fi
       displayName: "Create EF Core Migrations (if needed)"
 
     # Apply the EF Core migrations to the database
