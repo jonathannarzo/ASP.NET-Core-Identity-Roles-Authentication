@@ -222,8 +222,9 @@ public class AccountController : ControllerBase
             {
                 Path = "/",
                 HttpOnly = true,
-                Secure = false,
-                Expires = DateTime.UtcNow.AddDays(1)
+                Secure = true,
+                Expires = DateTime.UtcNow.AddDays(1),
+                SameSite = SameSiteMode.None
             };
 
             Response.Cookies.Append(
