@@ -19,7 +19,7 @@ steps:
           dotnet build api.csproj --configuration $(buildConfiguration)
       displayName: "Restore & Build"
 
-    # Run EF Core Migrations BEFORE publishing the app
+    # Create EF Core Migration bundle
     - script: |
           dotnet tool install --global dotnet-ef
           dotnet ef migrations bundle --project api.csproj --output efbundle
@@ -27,7 +27,7 @@ steps:
 
     # Run EF migrations
     - powershell: |
-          .\efbundle.exe --connection "$env:DB_CONNECTION_STRING"
+          . "$(Build.ArtifactStagingDirectory)\efbundle.exe" --connection "$env:DB_CONNECTION_STRING"
       displayName: "Run EF Core Migrations"
       env:
           DB_CONNECTION_STRING: $(DB_CONNECTION_STRING)
