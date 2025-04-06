@@ -19,10 +19,19 @@ steps:
           dotnet build api.csproj --configuration $(buildConfiguration)
       displayName: "Restore & Build"
 
-    # Create EF Core Migration bundle
+    # Install the EF Core CLI tool once
     - script: |
           dotnet tool install --global dotnet-ef
-          dotnet ef migrations bundle --project api.csproj --output efbundle.exe
+      displayName: "Install dotnet-ef tool"
+
+    # Create EF Core Migrations (if needed)
+    - script: |
+          dotnet ef migrations add InitialMigration --project api.csproj --output-dir Migrations
+      displayName: "Create EF Core Migrations"
+
+    # Bundle the EF Core Migrations
+    - script: |
+          dotnet ef migrations bundle --project api.csproj --output efbundle
       displayName: "Create EF Migration Bundle"
 
     # Run EF migrations
