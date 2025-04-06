@@ -19,16 +19,12 @@ steps:
           dotnet build api.csproj --configuration $(buildConfiguration)
       displayName: "Restore & Build"
 
-    # Create EF Core Migration bundle
-    - script: |
+    # Create and Run EF Core Migration bundle
+    - powershell: |
           dotnet tool install --global dotnet-ef
           dotnet ef migrations bundle --project api.csproj --output efbundle
-      displayName: "Create EF Migration Bundle"
-
-    # Run EF migrations
-    - powershell: |
-          & "efbundle.exe" --connection "$env:DB_CONNECTION_STRING"
-      displayName: "Run EF Core Migrations"
+          .\efbundle.exe --connection "$env:DB_CONNECTION_STRING"
+      displayName: "Create and Run EF Core Migration"
       env:
           DB_CONNECTION_STRING: $(DB_CONNECTION_STRING)
 
