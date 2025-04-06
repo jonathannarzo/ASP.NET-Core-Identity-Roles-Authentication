@@ -27,10 +27,8 @@ steps:
 
     # Run EF migrations
     - powershell: |
-          .\efbundle.exe --connection "$env:DB_CONNECTION_STRING"
+          .\efbundle.exe
       displayName: "Run EF Core Migration"
-      env:
-          DB_CONNECTION_STRING: $(DB_CONNECTION_STRING)
 
     - script: |
           dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
