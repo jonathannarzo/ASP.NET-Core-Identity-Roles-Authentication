@@ -23,7 +23,7 @@ steps:
     - powershell: |
           dotnet tool install --global dotnet-ef
           dotnet ef migrations bundle --project api.csproj --output efbundle
-          .\efbundle.exe --connection "$env:DB_CONNECTION_STRING"
+          .\efbundle --connection "$env:DB_CONNECTION_STRING"
       displayName: "Create and Run EF Core Migration"
       env:
           DB_CONNECTION_STRING: $(DB_CONNECTION_STRING)
