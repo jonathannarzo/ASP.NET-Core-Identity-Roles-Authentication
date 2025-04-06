@@ -22,13 +22,15 @@ steps:
     # Run EF Core Migrations BEFORE publishing the app
     - script: |
           dotnet tool install --global dotnet-ef
-          dotnet ef migrations add InitialCreate --project api.csproj --startup-project api.csproj || echo "Migrations already added."
-      displayName: "Create EF Core Migrations (if needed)"
+          dotnet ef migrations bundle --project api.csproj --output efbundle
+      displayName: "Create EF Migration Bundle"
 
-    # Apply the EF Core migrations to the database
+    # Run EF migrations
     - script: |
-          dotnet ef database update --project api.csproj --startup-project api.csproj
-      displayName: "Apply EF Core Migrations"
+          ./efbundle --connection "$DB_CONNECTION_STRING"
+      displayName: "Run EF Core Migrations"
+      env:
+          DB_CONNECTION_STRING: $(DB_CONNECTION_STRING)
 
     - script: |
           dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
