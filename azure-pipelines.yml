@@ -26,13 +26,9 @@ steps:
       displayName: "Create EF Migration Bundle"
 
     # Run EF migrations
-    - script: |
-          if [[ "$AGENT_OS" == "Windows_NT" ]]; then
-              ./efbundle.exe --connection "$DB_CONNECTION_STRING"
-          else
-              ./efbundle --connection "$DB_CONNECTION_STRING"
-          fi
-      shell: bash
+    - powershell: |
+          .\efbundle.exe --connection "$env:DB_CONNECTION_STRING"
+      displayName: "Run EF Core Migrations"
       env:
           DB_CONNECTION_STRING: $(DB_CONNECTION_STRING)
 
