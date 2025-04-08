@@ -31,7 +31,7 @@ steps:
 
     # Bundle the EF Core Migrations
     - script: |
-          dotnet ef migrations bundle --project api.csproj --output efbundle
+          dotnet ef migrations bundle --project api.csproj --output efbundle --no-build
       displayName: "Create EF Migration Bundle"
 
     # Run EF migrations
