@@ -19,7 +19,7 @@ public class AppDbContext : IdentityDbContext<ApiUser>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        // base.OnModelCreating(builder);
+        base.OnModelCreating(builder);
 
         // builder.ApplyConfiguration(new RoleConfiguration());
 
