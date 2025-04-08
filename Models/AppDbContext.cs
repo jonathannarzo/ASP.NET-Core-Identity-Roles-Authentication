@@ -23,6 +23,7 @@ public class AppDbContext : IdentityDbContext<ApiUser>
 
         builder.ApplyConfiguration(new RoleConfiguration());
 
+        // test
         // builder.Entity<ApiUser>(b =>
         // {
         //     b.HasMany(e => e.UserRoles)
