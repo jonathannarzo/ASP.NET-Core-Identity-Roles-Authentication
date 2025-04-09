@@ -25,21 +25,25 @@ steps:
       displayName: "Install dotnet-ef tool"
 
     - script: |
-        dotnet ef migrations script --idempotent --project ./api.csproj --output $(Build.ArtifactStagingDirectory)/script.sql
-      displayName: 'Generate PostgreSQL Script'
+          dotnet ef migrations script \
+            --idempotent \
+            --project ./api.csproj \
+            --context AppDbContext \
+            --output $(Build.ArtifactStagingDirectory)/script.sql
+      displayName: "Generate PostgreSQL Script"
 
     # Use a script or task to apply the SQL script to PostgreSQL, for example:
     - script: |
-        echo "Running SQL script on PostgreSQL..."
-        export PGPASSWORD=$PG_PASSWORD
-        psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -f "$(Build.ArtifactStagingDirectory)/script.sql"
-      displayName: 'Apply SQL to PostgreSQL'
+          echo "Running SQL script on PostgreSQL..."
+          export PGPASSWORD=$PG_PASSWORD
+          psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -f "$(Build.ArtifactStagingDirectory)/script.sql"
+      displayName: "Apply SQL to PostgreSQL"
       env:
-        PG_HOST: $(pghost)
-        PG_PORT: $(pgport)
-        PG_DB: $(pgdb)
-        PG_USER: $(pguser)
-        PG_PASSWORD: $(pgpassword)
+          PG_HOST: $(pghost)
+          PG_PORT: $(pgport)
+          PG_DB: $(pgdb)
+          PG_USER: $(pguser)
+          PG_PASSWORD: $(pgpassword)
 
     - script: |
           dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
