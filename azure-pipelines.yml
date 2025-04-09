@@ -24,14 +24,20 @@ steps:
           dotnet tool install --global dotnet-ef
       displayName: "Install dotnet-ef tool"
 
-    # Create EF Core Migrations (if needed)
     - script: |
-          dotnet ef migrations add InitialMigration --project api.csproj --output-dir Migrations
-      displayName: "Create EF Core Migrations"
+        dotnet ef migrations script --idempotent --project ./api.csproj --output $(Build.ArtifactStagingDirectory)/script.sql
+      displayName: 'Generate PostgreSQL Script'
 
+    # Use a script or task to apply the SQL script to PostgreSQL, for example:
     - script: |
-        dotnet ef database update --context AppDbContext
-      displayName: 'Apply EF Core Migrations'
+        psql "host=$(PG_HOST) port=$(PG_PORT) dbname=$(PG_DB) user=$(PG_USER) password=$(PG_PASSWORD)" -f "$(Build.ArtifactStagingDirectory)/script.sql"
+      displayName: 'Apply SQL to PostgreSQL'
+      env:
+        PG_HOST: $(pghost)
+        PG_PORT: $(pgport)
+        PG_DB: $(pgdb)
+        PG_USER: $(pguser)
+        PG_PASSWORD: $(pgpassword)
 
     - script: |
           dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
