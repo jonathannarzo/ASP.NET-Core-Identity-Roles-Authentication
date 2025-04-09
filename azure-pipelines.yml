@@ -30,7 +30,9 @@ steps:
 
     # Use a script or task to apply the SQL script to PostgreSQL, for example:
     - script: |
-        psql "host=$(PG_HOST) port=$(PG_PORT) dbname=$(PG_DB) user=$(PG_USER) password=$(PG_PASSWORD)" -f "$(Build.ArtifactStagingDirectory)/script.sql"
+        echo "Running SQL script on PostgreSQL..."
+        export PGPASSWORD=$PG_PASSWORD
+        psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -f "$(Build.ArtifactStagingDirectory)/script.sql"
       displayName: 'Apply SQL to PostgreSQL'
       env:
         PG_HOST: $(pghost)
