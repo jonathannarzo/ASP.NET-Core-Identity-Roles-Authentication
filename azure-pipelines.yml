@@ -29,15 +29,9 @@ steps:
           dotnet ef migrations add InitialMigration --project api.csproj --output-dir Migrations
       displayName: "Create EF Core Migrations"
 
-    # Bundle the EF Core Migrations
     - script: |
-          dotnet ef migrations bundle --project api.csproj --output efbundle --no-build
-      displayName: "Create EF Migration Bundle"
-
-    # Run EF migrations
-    - script: |
-          ./efbundle
-      displayName: "Run EF Core Migration"
+        dotnet ef database update --context .\Models\AppDbContext.cs
+      displayName: 'Apply EF Core Migrations'
 
     - script: |
           dotnet publish api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
