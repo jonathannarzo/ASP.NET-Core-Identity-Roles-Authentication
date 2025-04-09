@@ -30,7 +30,7 @@ steps:
       displayName: "Create EF Core Migrations"
 
     - script: |
-        dotnet ef database update --context "./Models/AppDbContext.cs"
+        dotnet ef database update --context AppDbContext
       displayName: 'Apply EF Core Migrations'
 
     - script: |
