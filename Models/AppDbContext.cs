@@ -13,7 +13,7 @@ public class AppDbContext : IdentityDbContext<ApiUser>
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
-        // Form postgres sql date time error
+        // Form postgres sql date time error.
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
 
