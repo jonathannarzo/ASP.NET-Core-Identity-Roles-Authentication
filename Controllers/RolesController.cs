@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -16,23 +17,42 @@ public class RolesController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IMapper _mapper;
 
-    public RolesController(AppDbContext context, RoleManager<IdentityRole> roleManager)
+    public RolesController(AppDbContext context, RoleManager<IdentityRole> roleManager, IMapper mapper)
     {
         _context = context;
         _roleManager = roleManager;
-
+        _mapper = mapper;
     }
 
     // GET: api/Roles
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<IdentityRole>>> GetRoles()
+    public async Task<ActionResult<IEnumerable<IdentityRole>>> GetRoles(int? pageNum)
     {
-        if (_roleManager.Roles == null)
+        var RoleData = _roleManager.Roles;
+        
+        if (RoleData == null)
         {
             return NotFound();
         }
-        return await _roleManager.Roles.ToListAsync();
+
+        if (pageNum != null)
+        {
+            int pageSize = 5;
+            var data = await PaginatedList<IdentityRole>.CreateAsync(RoleData, pageNum ?? 1, pageSize);
+            
+            return Ok(new
+            {
+                dataList = data,
+                PageIndex = data.PageIndex,
+                HasNextPage = data.HasNextPage,
+                HasPreviousPage = data.HasPreviousPage,
+                TotalPages = data.TotalPages
+            });
+        }
+        
+        return await RoleData.ToListAsync();
         // return await _context.Roles.ToListAsync();
     }
 
@@ -88,30 +108,31 @@ public class RolesController : ControllerBase
     // POST: api/Roles
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
-    public async Task<ActionResult<Roles>> PostRoles(Roles roles)
+    public async Task<ActionResult> PostRoles([FromBody] RoleDTO roleDTO)
     {
-        if (_context.Roles == null)
+        if (!ModelState.IsValid)
         {
-            return Problem("Entity set 'AppDbContext.Roles'  is null.");
+            return BadRequest(ModelState);
         }
-        _context.Roles.Add(roles);
+
         try
         {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            if (RolesExists(roles.Id))
+            var role = _mapper.Map<Roles>(roleDTO);
+            var result = await _roleManager.CreateAsync(role);
+
+            if (result.Succeeded)
             {
-                return Conflict();
+                return CreatedAtAction(nameof(GetRoles), new { role.Name }, role);
             }
             else
             {
-                throw;
+                return BadRequest(result.Errors);
             }
         }
-
-        return CreatedAtAction("GetRoles", new { id = roles.Id }, roles);
+        catch (Exception)
+        {
+            return Problem("Something went wrong", statusCode: 500);
+        }
     }
 
     // DELETE: api/Roles/5

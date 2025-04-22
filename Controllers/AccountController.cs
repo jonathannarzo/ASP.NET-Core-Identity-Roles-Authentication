@@ -10,7 +10,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
+using System.Security.Claims;
+using Microsoft.CodeAnalysis;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -33,6 +36,7 @@ public class AccountController : ControllerBase
 
     // GET: api/Account
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<ApiUser>>> GetUsers(int? pageNum)
     {
         if (_context.Users == null)
@@ -83,13 +87,9 @@ public class AccountController : ControllerBase
 
     // GET: api/Account/5
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<ApiUser>> GetApiUser(string id)
     {
-        if (_context.Users == null)
-        {
-            return NotFound();
-        }
-
         var apiUser = await _context.Users.FindAsync(id);
 
         if (apiUser == null)
@@ -107,8 +107,8 @@ public class AccountController : ControllerBase
     }
 
     // PUT: api/Account/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> PutApiUser(string id, [FromBody] UpdateUserDTO userDTO)
     {
         var apiUser = await _context.Users.FindAsync(id);
@@ -125,13 +125,15 @@ public class AccountController : ControllerBase
         if (checkEmail != null)
         {
             ModelState.AddModelError("email", "Email already exist.");
-            BadRequest(ModelState);
+            return BadRequest(ModelState);
         }
 
         // set data values
         apiUser.Email = userDTO.Email;
+        apiUser.UserName = userDTO.Email;
         apiUser.FirstName = userDTO.FirstName;
         apiUser.LastName = userDTO.LastName;
+        apiUser.PhoneNumber = userDTO.PhoneNumber;
 
         try
         {
@@ -156,7 +158,11 @@ public class AccountController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            var allErrors = ModelState.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value?.Errors?.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+            );
+            return BadRequest(new { errors = allErrors });
         }
 
         try
@@ -165,14 +171,19 @@ public class AccountController : ControllerBase
             user.UserName = userDTO.Email;
             var result = await _userManager.CreateAsync(user, userDTO.Password);
 
-            // return ;
             if (!result.Succeeded)
             {
-                foreach (var e in result.Errors)
-                {
-                    ModelState.AddModelError(e.Code, e.Description);
-                }
-                return BadRequest(ModelState);
+                // foreach (var e in result.Errors)
+                // {
+                //     ModelState.AddModelError(e.Code, e.Description);
+                // }
+                // return BadRequest(ModelState);
+                var allErrors = result.Errors.ToDictionary(
+                    e => e.Code ?? "UnknownError",
+                    e => new string[] { e.Description ?? "An unknown error occurred." }
+                );
+
+                return BadRequest(new { errors = allErrors });
             }
 
             await _userManager.AddToRolesAsync(user, userDTO.Roles);
@@ -184,6 +195,96 @@ public class AccountController : ControllerBase
         {
             return Problem("Something went wrong", statusCode: 500);
         }
+    }
+
+
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<ActionResult<ApiUser>> GetUserProfile()
+    {
+        var username = User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (string.IsNullOrEmpty(username))
+            return Unauthorized("User ID not found.");
+
+        var profile = await _authManager.ValidateUser(username);
+
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(profile);
+    }
+
+    [HttpPut("profile/update")]
+    [Authorize]
+    public async Task<ActionResult<ApiUser>> ProfileUpdate([FromBody] UpdateProfileDTO userDTO)
+    {
+        var username = User.FindFirst(ClaimTypes.Name)?.Value;
+    
+        if (string.IsNullOrEmpty(username))
+            return Unauthorized("User ID not found.");
+
+        var profile = await _context.Users.FirstOrDefaultAsync(p => p.UserName == username);
+
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        var checkEmail = _context.Users.FirstOrDefault(x => x.Email == userDTO.Email && x.Id != profile.Id);
+
+        if (checkEmail != null)
+        {
+            ModelState.AddModelError("email", "Email already exist.");
+            return BadRequest(ModelState);
+        }
+
+        // Proceed updating profile
+        profile.FirstName = userDTO.FirstName;
+        profile.LastName = userDTO.LastName;
+        profile.PhoneNumber = userDTO.PhoneNumber;
+        profile.Email = userDTO.Email;
+        profile.UserName = userDTO.Email;
+
+        try
+        {
+            // update profile of the user
+            await _userManager.UpdateAsync(profile);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw;
+        }
+
+        return Ok(profile);
+    }
+
+    [HttpPut("profile/changepassword")]
+    [Authorize]
+    public async Task<ActionResult<ApiUser>> ChangePassword([FromBody] ChangePasswordDTO cpDTO)
+    {
+        var username = User.FindFirst(ClaimTypes.Name)?.Value;
+    
+        if (string.IsNullOrEmpty(username))
+            return Unauthorized("User ID not found.");
+
+        var profile = await _context.Users.FirstOrDefaultAsync(p => p.UserName == username);
+        
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        var result = await _userManager.ChangePasswordAsync(profile, cpDTO.CurrentPassword, cpDTO.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(new { message = "Password changed successfully." });
     }
 
     [HttpPost]
@@ -301,6 +402,7 @@ public class AccountController : ControllerBase
 
     // DELETE: api/Account/5
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteApiUser(string id)
     {
         if (_context.Users == null)

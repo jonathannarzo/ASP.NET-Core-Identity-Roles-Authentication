@@ -9,6 +9,7 @@ public class MapperInitializer : Profile
     {
         CreateMap<ApiUser, UserDTO>().ReverseMap();
         CreateMap<ApiUser, UpdateUserDTO>().ReverseMap();
+        CreateMap<ApiUser, UpdateProfileDTO>().ReverseMap();
         CreateMap<Roles, RoleDTO>().ReverseMap();
     }
 }

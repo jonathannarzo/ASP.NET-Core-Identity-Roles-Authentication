@@ -1,11 +1,13 @@
 namespace api.Models;
 
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 public class ApiUser : IdentityUser, IAuditable
 {
+    [Required]
     public string FirstName { get; set; }
+    [Required]
     public string LastName { get; set; }
 
     public DateTimeOffset? DateCreated { get; set; }
