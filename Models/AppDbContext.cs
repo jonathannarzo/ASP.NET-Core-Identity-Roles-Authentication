@@ -1,11 +1,8 @@
 namespace api.Models;
 
-using api.Models;
 using api.Configuration.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 
 public class AppDbContext : IdentityDbContext<ApiUser>
 // Inheritance for including roles in query
@@ -21,7 +18,12 @@ public class AppDbContext : IdentityDbContext<ApiUser>
     {
         base.OnModelCreating(builder);
 
+        // Apply seeding for role
         builder.ApplyConfiguration(new RoleConfiguration());
+        // Apply seeding for user
+        builder.ApplyConfiguration(new UserConfiguration());
+        // Apply seeding for user role
+        builder.ApplyConfiguration(new UserRoleConfiguration());
 
         builder.Entity<ApiUser>(b =>
         {
